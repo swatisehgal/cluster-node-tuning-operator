@@ -35,23 +35,27 @@ import (
 )
 
 const (
-	oslatTestName        = "oslat"
-	cyclictestTestName   = "cyclictest"
-	hwlatdetectTestName  = "hwlatdetect"
-	defaultTestDelay     = 0
-	defaultTestRun       = false
-	defaultTestRuntime   = "300"
-	defaultMaxLatency    = -1
-	defaultTestCpus      = -1
-	minCpuAmountForOslat = 2
+	oslatTestName                    = "oslat"
+	cyclictestTestName               = "cyclictest"
+	hwlatdetectTestName              = "hwlatdetect"
+	defaultTestDelay                 = 0
+	defaultTestRun                   = false
+	defaultTestRuntime               = "300"
+	defaultLatencyTestRuntimeSeconds = 300
+	defaultLatencyTestRuntimeTimeout = time.Duration(740 * time.Second)
+	defaultMaxLatency                = -1
+	defaultTestCpus                  = -1
+	minCpuAmountForOslat             = 2
 )
 
 var (
-	latencyTestDelay   = defaultTestDelay
-	latencyTestRun     = defaultTestRun
-	latencyTestRuntime = defaultTestRuntime
-	maximumLatency     = defaultMaxLatency
-	latencyTestCpus    = defaultTestCpus
+	latencyTestDelay          = defaultTestDelay
+	latencyTestRun            = defaultTestRun
+	latencyTestRuntime        = defaultTestRuntime
+	latencyTestRuntimeSeconds = defaultLatencyTestRuntimeSeconds
+	latencyTestRuntimeTimeout = defaultLatencyTestRuntimeTimeout
+	maximumLatency            = defaultMaxLatency
+	latencyTestCpus           = defaultTestCpus
 )
 
 // LATENCY_TEST_DELAY delay the run of the binary, can be useful to give time to the CPU manager reconcile loop
@@ -78,6 +82,12 @@ var _ = Describe("[performance] Latency Test", Ordered, func() {
 
 		latencyTestRuntime, err = getLatencyTestRuntime()
 		Expect(err).ToNot(HaveOccurred())
+
+		latencyTestRuntimeSeconds, err := strconv.Atoi(latencyTestRuntime)
+		Expect(err).ToNot(HaveOccurred())
+
+		// Keeping the timeout greater than the timeout used or podTimeout later in the tests
+		latencyTestRuntimeTimeout = time.Duration(latencyTestRuntimeSeconds + latencyTestDelay + 240)
 
 		if !latencyTestRun {
 			Skip("Skip the latency test, the LATENCY_TEST_RUN set to false")
@@ -265,7 +275,7 @@ var _ = Describe("[performance] Latency Test", Ordered, func() {
 			// hwlatdetect will do that for us and exit with error if needed.
 		})
 	})
-})
+}, NodeTimeout(latencyTestRuntimeTimeout*time.Second))
 
 func getLatencyTestRun() (bool, error) {
 	if latencyTestRunEnv, ok := os.LookupEnv("LATENCY_TEST_RUN"); ok {
