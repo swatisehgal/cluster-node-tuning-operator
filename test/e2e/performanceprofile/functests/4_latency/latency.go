@@ -192,7 +192,7 @@ var _ = Describe("[performance] Latency Test", Ordered, func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(curr < maximumLatency).To(BeTrue(), "The current latency %d is bigger than the expected one %d", curr, maximumLatency)
 			}
-		})
+		}, NodeTimeout(latencyTestRuntimeTimeout*time.Second))
 	})
 
 	Context("with the cyclictest image", func() {
@@ -234,7 +234,7 @@ var _ = Describe("[performance] Latency Test", Ordered, func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(curr < maximumLatency).To(BeTrue(), "The current latency %d is bigger than the expected one %d", curr, maximumLatency)
 			}
-		})
+		}, NodeTimeout(latencyTestRuntimeTimeout*time.Second))
 	})
 
 	Context("with the hwlatdetect image", func() {
@@ -273,7 +273,7 @@ var _ = Describe("[performance] Latency Test", Ordered, func() {
 			createLatencyTestPod(latencyTestPod)
 			// here we don't need to parse the latency values.
 			// hwlatdetect will do that for us and exit with error if needed.
-		})
+		}, NodeTimeout(latencyTestRuntimeTimeout*time.Second))
 	})
 })
 
