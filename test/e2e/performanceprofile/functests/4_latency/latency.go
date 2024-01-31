@@ -83,7 +83,7 @@ var _ = Describe("[performance] Latency Test", Ordered, func() {
 		latencyTestRuntime, err = getLatencyTestRuntime()
 		Expect(err).ToNot(HaveOccurred())
 
-		latencyTestRuntimeSeconds, err := strconv.Atoi(latencyTestRuntime)
+		latencyTestRuntimeSeconds, err = strconv.Atoi(latencyTestRuntime)
 		Expect(err).ToNot(HaveOccurred())
 
 		// Keeping the timeout greater than the timeout used or podTimeout later in the tests
@@ -275,7 +275,7 @@ var _ = Describe("[performance] Latency Test", Ordered, func() {
 			// hwlatdetect will do that for us and exit with error if needed.
 		})
 	})
-}, NodeTimeout(latencyTestRuntimeTimeout*time.Second))
+})
 
 func getLatencyTestRun() (bool, error) {
 	if latencyTestRunEnv, ok := os.LookupEnv("LATENCY_TEST_RUN"); ok {
