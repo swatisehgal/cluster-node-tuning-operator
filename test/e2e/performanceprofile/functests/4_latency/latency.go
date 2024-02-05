@@ -86,7 +86,7 @@ var _ = Describe("[performance] Latency Test", Ordered, func() {
 		latencyTestRuntimeSeconds, err = strconv.Atoi(latencyTestRuntime)
 		Expect(err).ToNot(HaveOccurred())
 
-		// Keeping the timeout greater than the timeout used or podTimeout later in the tests
+		// Keeping the timeout greater than the timeout used for podTimeout later in the tests
 		latencyTestRuntimeTimeout = time.Duration(latencyTestRuntimeSeconds + latencyTestDelay + 240)
 
 		if !latencyTestRun {
