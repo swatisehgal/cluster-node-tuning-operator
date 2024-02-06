@@ -35,23 +35,28 @@ import (
 )
 
 const (
-	oslatTestName        = "oslat"
-	cyclictestTestName   = "cyclictest"
-	hwlatdetectTestName  = "hwlatdetect"
-	defaultTestDelay     = 0
-	defaultTestRun       = false
-	defaultTestRuntime   = "300"
-	defaultMaxLatency    = -1
-	defaultTestCpus      = -1
-	minCpuAmountForOslat = 2
+	oslatTestName                    = "oslat"
+	cyclictestTestName               = "cyclictest"
+	hwlatdetectTestName              = "hwlatdetect"
+	defaultTestDelay                 = 0
+	defaultTestRun                   = false
+	defaultTestRuntime               = "300"
+	defaultLatencyTestRuntimeSeconds = 300
+	// defaultLatencyTestRuntimeTimeout = defaultLatencyTestRuntimeSeconds (300s) + 2 minutes (120s: buffer to allow the pod to move to succesful state)
+	defaultLatencyTestRuntimeTimeout = time.Duration(420 * time.Second)
+	defaultMaxLatency                = -1
+	defaultTestCpus                  = -1
+	minCpuAmountForOslat             = 2
 )
 
 var (
-	latencyTestDelay   = defaultTestDelay
-	latencyTestRun     = defaultTestRun
-	latencyTestRuntime = defaultTestRuntime
-	maximumLatency     = defaultMaxLatency
-	latencyTestCpus    = defaultTestCpus
+	latencyTestDelay          = defaultTestDelay
+	latencyTestRun            = defaultTestRun
+	latencyTestRuntime        = defaultTestRuntime
+	latencyTestRuntimeSeconds = defaultLatencyTestRuntimeSeconds
+	latencyTestRuntimeTimeout = defaultLatencyTestRuntimeTimeout
+	maximumLatency            = defaultMaxLatency
+	latencyTestCpus           = defaultTestCpus
 )
 
 // LATENCY_TEST_DELAY delay the run of the binary, can be useful to give time to the CPU manager reconcile loop
@@ -78,6 +83,13 @@ var _ = Describe("[performance] Latency Test", Ordered, func() {
 
 		latencyTestRuntime, err = getLatencyTestRuntime()
 		Expect(err).ToNot(HaveOccurred())
+
+		latencyTestRuntimeSeconds, err = strconv.Atoi(latencyTestRuntime)
+		Expect(err).ToNot(HaveOccurred())
+
+		// latencyTestRuntimeTimeout > latencyTestRuntimeSeconds + latencyTestDelay
+		// 120s: 2 minutes of buffer to allow the latency test pod to move to successful state
+		latencyTestRuntimeTimeout = time.Duration(latencyTestRuntimeSeconds + latencyTestDelay + 120)
 
 		if !latencyTestRun {
 			Skip("Skip the latency test, the LATENCY_TEST_RUN set to false")
@@ -182,7 +194,7 @@ var _ = Describe("[performance] Latency Test", Ordered, func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(curr < maximumLatency).To(BeTrue(), "The current latency %d is bigger than the expected one %d", curr, maximumLatency)
 			}
-		})
+		}, NodeTimeout(latencyTestRuntimeTimeout*time.Second))
 	})
 
 	Context("with the cyclictest image", func() {
@@ -224,7 +236,7 @@ var _ = Describe("[performance] Latency Test", Ordered, func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(curr < maximumLatency).To(BeTrue(), "The current latency %d is bigger than the expected one %d", curr, maximumLatency)
 			}
-		})
+		}, NodeTimeout(latencyTestRuntimeTimeout*time.Second))
 	})
 
 	Context("with the hwlatdetect image", func() {
@@ -264,7 +276,7 @@ var _ = Describe("[performance] Latency Test", Ordered, func() {
 			// here we don't need to parse the latency values.
 			// hwlatdetect will do that for us and exit with error if needed.
 		})
-	})
+	}, NodeTimeout(latencyTestRuntimeTimeout*time.Second))
 })
 
 func getLatencyTestRun() (bool, error) {
@@ -450,8 +462,8 @@ func createLatencyTestPod(testPod *corev1.Pod) {
 	err := testclient.Client.Create(context.TODO(), testPod)
 	Expect(err).ToNot(HaveOccurred())
 
-	timeout, err := strconv.Atoi(latencyTestRuntime)
-	Expect(err).ToNot(HaveOccurred())
+	// timeout, err := strconv.Atoi(latencyTestRuntime)
+	// Expect(err).ToNot(HaveOccurred())
 
 	By("Waiting two minutes to download the latencyTest image")
 	podKey := fmt.Sprintf("%s/%s", testPod.Namespace, testPod.Name)
@@ -476,8 +488,7 @@ func createLatencyTestPod(testPod *corev1.Pod) {
 	}
 
 	By("Waiting another two minutes to give enough time for the cluster to move the pod to Succeeded phase")
-	podTimeout := time.Duration(timeout + latencyTestDelay + 120)
-	testPod, err = pods.WaitForPhase(client.ObjectKeyFromObject(testPod), corev1.PodSucceeded, podTimeout*time.Second)
+	testPod, err = pods.WaitForPhase(client.ObjectKeyFromObject(testPod), corev1.PodSucceeded, latencyTestRuntimeTimeout*time.Second)
 	if err != nil {
 		logEventsForPod(testPod)
 	}
