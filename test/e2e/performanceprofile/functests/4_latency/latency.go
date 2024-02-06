@@ -2,6 +2,7 @@ package __latency
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"math"
 	"os"
@@ -58,6 +59,14 @@ var (
 	maximumLatency            = defaultMaxLatency
 	latencyTestCpus           = defaultTestCpus
 )
+
+var ginkgoTimeout string
+
+func init() {
+	flag.StringVar(&ginkgoTimeout, "ginkgo.timeout", "1h", "")
+	flag.Parse()
+	fmt.Println("Swati Ginkgo flag parsed ", ginkgoTimeout)
+}
 
 // LATENCY_TEST_DELAY delay the run of the binary, can be useful to give time to the CPU manager reconcile loop
 // to update the default CPU pool
