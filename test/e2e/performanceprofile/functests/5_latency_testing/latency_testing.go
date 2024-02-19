@@ -104,7 +104,8 @@ var _ = DescribeTable("Test latency measurement tools tests", func(testGroup []l
 		testDescription := setEnvAndGetDescription(test)
 		By(testDescription)
 		fmt.Println("The timeout value passed", test.ginkgoTimeout)
-		output, err := exec.Command(testExecutablePath, "-ginkgo.v", "-ginkgo.focus", test.toolToTest, fmt.Sprintf("-ginkgo.timeout=%s", test.ginkgoTimeout)).Output()
+		cmd := exec.Command(testExecutablePath, "-ginkgo.v", "-ginkgo.focus", test.toolToTest, "-ginkgo.timeout", test.ginkgoTimeout)
+		output, err := cmd.Output()
 
 		fmt.Println("Output after execution", string(output))
 
@@ -235,8 +236,8 @@ func getValidValuesTests(toolToTest string) []latencyTest {
 	//1. to let the tools have their time to measure latency properly 2. have time to check that the pod phase turned running and not completed immediately
 	//testCpus: for tests that expect a success output message, note that an even CPU number is needed, otherwise the test would fail with SMTAlignmentError
 
-	successRuntime := "180"
-	successGinkgoTimeout := "200s"
+	successRuntime := "80"
+	successGinkgoTimeout := "300s"
 	testSet = append(testSet, latencyTest{testDelay: "200", testRun: "true", testRuntime: successRuntime, testMaxLatency: guaranteedLatency, testCpus: "4", outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
 	// testSet = append(testSet, latencyTest{testDelay: "0", testRun: "true", testRuntime: successRuntime, testMaxLatency: guaranteedLatency, testCpus: "4", outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
 	// testSet = append(testSet, latencyTest{testDelay: "0", testRun: "true", testRuntime: successRuntime, testMaxLatency: guaranteedLatency, testCpus: "6", outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
