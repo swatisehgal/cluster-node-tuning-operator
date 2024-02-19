@@ -88,6 +88,7 @@ type latencyTest struct {
 	testCpus              string
 	outputMsgs            []string
 	toolToTest            string
+	ginkgoTimeout         string
 }
 
 var _ = DescribeTable("Test latency measurement tools tests", func(testGroup []latencyTest, isPositiveTest bool) {
@@ -96,7 +97,8 @@ var _ = DescribeTable("Test latency measurement tools tests", func(testGroup []l
 		clearEnv()
 		testDescription := setEnvAndGetDescription(test)
 		By(testDescription)
-		output, err := exec.Command(testExecutablePath, "-ginkgo.v", "-ginkgo.focus", test.toolToTest).Output()
+		output, err := exec.Command(testExecutablePath, "-ginkgo.v", "-ginkgo.focus", test.toolToTest, "-ginkgo.timeout", test.ginkgoTimeout).Output()
+
 		if err != nil {
 			//we don't log Error level here because the test might be a negative check
 			testlog.Info(err.Error())
@@ -128,6 +130,7 @@ var _ = DescribeTable("Test latency measurement tools tests", func(testGroup []l
 				switch test.toolToTest {
 				case oslat:
 					passedArgs = []string{"--duration " + test.testRuntime, "--rtprio ", "--cpu-list ", "--cpu-main-thread "}
+				// The default image specified in test/e2e/performanceprofile/functests/utils/images/images.go cyclic test
 				case cyclictest:
 					passedArgs = []string{"--duration " + test.testRuntime, "--priority 95", "--threads ", "--affinity ", "--histogram ", "--interval ", "--mlockall ", "--quiet"}
 				case hwlatdetect:
@@ -154,6 +157,9 @@ var _ = DescribeTable("Test latency measurement tools tests", func(testGroup []l
 	Entry("[test_id:42853] Oslat - Verify that the latency tool test should print an expected error message when passing invalid environment variables values", getNegativeTests(oslat), negativeTesting),
 	Entry("[test_id:42115] Cyclictest - Verify that the tool is working properly with valid environment variables values", getValidValuesTests(cyclictest), positiveTesting),
 	Entry("[test_id:42852] Cyclictest - Verify that the latency tool test should print an expected error message when passing invalid environment variables values", getNegativeTests(cyclictest), negativeTesting),
+	Entry("[test_id:xxxxx] Oslat - Verify that the tool is working properly when latency test runtime < ginkgo timeout", getValidValuesTests(oslat), positiveTesting),
+	Entry("[test_id:xxxxx] Cyclictest - Verify that the tool is working properly when latency test runtime < ginkgo timeout", getValidValuesTests(cyclictest), positiveTesting),
+	Entry("[test_id:xxxxx] Hwlatdetect - Verify that the tool is working properly when latency test runtime < ginkgo timeout", getValidValuesTests(hwlatdetect), positiveTesting),
 	Entry("[test_id:42849] Hwlatdetect - Verify that the tool is working properly with valid environment variables values", getValidValuesTests(hwlatdetect), positiveTesting),
 	Entry("[test_id:42856] Hwlatdetect - Verify that the latency tool test should print an expected error message when passing invalid environment variables values", getNegativeTests(hwlatdetect), negativeTesting),
 )
@@ -218,6 +224,7 @@ func getValidValuesTests(toolToTest string) []latencyTest {
 	//testCpus: for tests that expect a success output message, note that an even CPU number is needed, otherwise the test would fail with SMTAlignmentError
 
 	successRuntime := "30"
+<<<<<<< HEAD
 	testSet = append(testSet, latencyTest{testDelay: "200", testRuntime: successRuntime, testMaxLatency: untunedLatencyThreshold, testCpus: "4", outputMsgs: []string{success}, toolToTest: toolToTest})
 	testSet = append(testSet, latencyTest{testDelay: "0", testRuntime: successRuntime, testMaxLatency: untunedLatencyThreshold, testCpus: "4", outputMsgs: []string{success}, toolToTest: toolToTest})
 	testSet = append(testSet, latencyTest{testDelay: "0", testRuntime: successRuntime, testMaxLatency: untunedLatencyThreshold, testCpus: "6", outputMsgs: []string{success}, toolToTest: toolToTest})
@@ -232,10 +239,29 @@ func getValidValuesTests(toolToTest string) []latencyTest {
 		testSet = append(testSet, latencyTest{testRuntime: successRuntime, testMaxLatency: "1", oslatMaxLatency: untunedLatencyThreshold, outputMsgs: []string{success}, toolToTest: toolToTest})
 		//TODO add tests when requested cpus for oslat is 2 once BZ 2055267 is resolved
 		testSet = append(testSet, latencyTest{testRuntime: successRuntime, oslatMaxLatency: untunedLatencyThreshold, outputMsgs: []string{success}, toolToTest: toolToTest})
+=======
+	// Using a timeout value such that ginkgo timeout > runtime + latency to ensure successfull runs
+	successGinkgoTimeout := "400s"
+	testSet = append(testSet, latencyTest{testDelay: "200", testRun: "true", testRuntime: successRuntime, testMaxLatency: guaranteedLatency, testCpus: "4", outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
+	testSet = append(testSet, latencyTest{testDelay: "0", testRun: "true", testRuntime: successRuntime, testMaxLatency: guaranteedLatency, testCpus: "4", outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
+	testSet = append(testSet, latencyTest{testDelay: "0", testRun: "true", testRuntime: successRuntime, testMaxLatency: guaranteedLatency, testCpus: "6", outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
+	testSet = append(testSet, latencyTest{testDelay: "1", testRun: "true", testRuntime: successRuntime, testMaxLatency: guaranteedLatency, outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
+	testSet = append(testSet, latencyTest{testDelay: "60", testRun: "true", testRuntime: successRuntime, testMaxLatency: guaranteedLatency, outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
+	testSet = append(testSet, latencyTest{testRun: "true", testRuntime: "2", testCpus: "5", testMaxLatency: guaranteedLatency, outputMsgs: []string{skip, skipOddCpuNumber}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
+
+	if toolToTest != hwlatdetect {
+		testSet = append(testSet, latencyTest{testRun: "true", testRuntime: "1", outputMsgs: []string{skip, skipMaxLatency}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
+	}
+	if toolToTest == oslat {
+		testSet = append(testSet, latencyTest{testRun: "true", testRuntime: successRuntime, testMaxLatency: "1", oslatMaxLatency: guaranteedLatency, outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
+		//TODO add tests when requested cpus for oslat is 2 once BZ 2055267 is resolved
+		testSet = append(testSet, latencyTest{testRun: "true", testRuntime: successRuntime, oslatMaxLatency: guaranteedLatency, outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
+>>>>>>> 54b8f9d6 (Add postive tests to ensure LATENCY_TEST_RUNTIME < ginkgo.timeout)
 		//TODO: update isolated CPUs in PP to 1 and restore the original set post test
 	}
 	if toolToTest == cyclictest {
 		//TODO add tests when requested cpus for cyclictest is 2 or less once BZ 2094046 is resolved
+<<<<<<< HEAD
 		testSet = append(testSet, latencyTest{testRuntime: successRuntime, testMaxLatency: "1", cyclictestMaxLatency: untunedLatencyThreshold, outputMsgs: []string{success}, toolToTest: toolToTest})
 		testSet = append(testSet, latencyTest{testRuntime: successRuntime, cyclictestMaxLatency: untunedLatencyThreshold, outputMsgs: []string{success}, toolToTest: toolToTest})
 	}
@@ -243,6 +269,15 @@ func getValidValuesTests(toolToTest string) []latencyTest {
 		testSet = append(testSet, latencyTest{testRuntime: successRuntime, testMaxLatency: "1", hwlatdetectMaxLatency: untunedLatencyThreshold, outputMsgs: []string{success}, toolToTest: toolToTest})
 		testSet = append(testSet, latencyTest{testRuntime: successRuntime, hwlatdetectMaxLatency: untunedLatencyThreshold, outputMsgs: []string{success}, toolToTest: toolToTest})
 		testSet = append(testSet, latencyTest{testRuntime: successRuntime, testMaxLatency: untunedLatencyThreshold, outputMsgs: []string{success}, toolToTest: toolToTest})
+=======
+		testSet = append(testSet, latencyTest{testRun: "true", testRuntime: successRuntime, testMaxLatency: "1", cyclictestMaxLatency: guaranteedLatency, outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
+		testSet = append(testSet, latencyTest{testRun: "true", testRuntime: successRuntime, cyclictestMaxLatency: guaranteedLatency, outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
+	}
+	if toolToTest == hwlatdetect {
+		testSet = append(testSet, latencyTest{testRun: "true", testRuntime: successRuntime, testMaxLatency: "1", hwlatdetectMaxLatency: guaranteedLatency, outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
+		testSet = append(testSet, latencyTest{testRun: "true", testRuntime: successRuntime, hwlatdetectMaxLatency: guaranteedLatency, outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
+		testSet = append(testSet, latencyTest{testRun: "true", testRuntime: successRuntime, outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
+>>>>>>> 54b8f9d6 (Add postive tests to ensure LATENCY_TEST_RUNTIME < ginkgo.timeout)
 	}
 	return testSet
 }
@@ -282,6 +317,7 @@ func getNegativeTests(toolToTest string) []latencyTest {
 		testSet = append(testSet, latencyTest{testRuntime: "2", hwlatdetectMaxLatency: "&", outputMsgs: []string{incorrectHwlatdetectMaxLatency, fail}, toolToTest: toolToTest})
 		testSet = append(testSet, latencyTest{testRuntime: "2", hwlatdetectMaxLatency: fmt.Sprint(math.MaxInt32 + 1), outputMsgs: []string{invalidNumberHwlatdetectMaxLatency, fail}, toolToTest: toolToTest})
 		testSet = append(testSet, latencyTest{testRuntime: "2", hwlatdetectMaxLatency: "-3", outputMsgs: []string{invalidNumberHwlatdetectMaxLatency, fail}, toolToTest: toolToTest})
-	}
+
+}
 	return testSet
 }
