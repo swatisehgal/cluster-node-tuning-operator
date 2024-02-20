@@ -104,7 +104,7 @@ var _ = DescribeTable("Test latency measurement tools tests", func(testGroup []l
 		testDescription := setEnvAndGetDescription(test)
 		By(testDescription)
 		fmt.Println("The timeout value passed", test.ginkgoTimeout)
-		output, err := exec.Command(testExecutablePath, "-ginkgo.v", "-ginkgo.focus", test.toolToTest, fmt.Sprintf("-ginkgo.timeout=%s", test.ginkgoTimeout)).Output()
+		output, err := exec.Command(testExecutablePath, "-ginkgo.v", "-ginkgo.focus", "-ginkgo.timeouts", "test.ginkgoTimeout").Output()
 
 		fmt.Println("Output after execution", string(output))
 
@@ -237,7 +237,7 @@ func getValidValuesTests(toolToTest string) []latencyTest {
 
 	successRuntime := "180"
 	successGinkgoTimeout := "200s"
-	testSet = append(testSet, latencyTest{testDelay: "200", testRun: "true", testRuntime: successRuntime, testMaxLatency: guaranteedLatency, testCpus: "4", outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
+	testSet = append(testSet, latencyTest{testDelay: "0", testRun: "true", testRuntime: successRuntime, testMaxLatency: guaranteedLatency, testCpus: "4", outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
 	// testSet = append(testSet, latencyTest{testDelay: "0", testRun: "true", testRuntime: successRuntime, testMaxLatency: guaranteedLatency, testCpus: "4", outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
 	// testSet = append(testSet, latencyTest{testDelay: "0", testRun: "true", testRuntime: successRuntime, testMaxLatency: guaranteedLatency, testCpus: "6", outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
 	// testSet = append(testSet, latencyTest{testDelay: "1", testRun: "true", testRuntime: successRuntime, testMaxLatency: guaranteedLatency, outputMsgs: []string{success}, toolToTest: toolToTest, ginkgoTimeout: successGinkgoTimeout})
