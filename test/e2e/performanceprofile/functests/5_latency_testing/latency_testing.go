@@ -132,7 +132,7 @@ var _ = DescribeTable("Test latency measurement tools tests", func(testGroup []l
 					passedArgs = []string{"--duration " + test.testRuntime, "--rtprio ", "--cpu-list ", "--cpu-main-thread "}
 				// The default image specified in test/e2e/performanceprofile/functests/utils/images/images.go cyclic test
 				case cyclictest:
-					passedArgs = []string{"--duration " + test.testRuntime, "--priority 95", "--threads ", "--affinity ", "--histogram ", "--interval ", "--mlockall ", "--quiet"}
+					passedArgs = []string{"-D " + test.testRuntime, "-p 95", "-t ", "-a ", "-h ", "-i ", "--mlockall ", "--quiet"}
 				case hwlatdetect:
 					thr := test.testMaxLatency
 					if test.hwlatdetectMaxLatency != "" {
